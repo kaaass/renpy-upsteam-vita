@@ -80,7 +80,7 @@ enabled_events = {
 
     pygame.TEXTEDITING,
     pygame.TEXTINPUT,
-    pygame.KEYMAPCHANGED,
+    #pygame.KEYMAPCHANGED,
 
     pygame.MOUSEMOTION,
     pygame.MOUSEBUTTONDOWN,
@@ -2251,7 +2251,8 @@ class Interface(object):
         pygame.display.hint("SDL_MOUSE_TOUCH_EVENTS", "0")
         pygame.display.hint("SDL_EMSCRIPTEN_ASYNCIFY", "0")
 
-        pygame.display.set_screensaver(renpy.config.allow_screensaver)
+        if not renpy.vita:
+            pygame.display.set_screensaver(renpy.config.allow_screensaver)
 
         # Needed for Ubuntu Unity.
         wmclass = renpy.config.save_directory or os.path.basename(sys.argv[0])
@@ -2349,7 +2350,7 @@ class Interface(object):
 
         renpy.config.renderer = renderer
 
-        if renpy.android or renpy.ios or renpy.emscripten:
+        if renpy.android or renpy.ios or renpy.emscripten or renpy.vita:
             renderers = [ "gles" ]
         elif renpy.windows:
             renderers = [ "gl", "angle", "gles" ]
@@ -2381,7 +2382,7 @@ class Interface(object):
             renderers = [ "sw" ]
 
         # Software renderer is the last hope for PC and mac.
-        if not (renpy.android or renpy.ios or renpy.emscripten):
+        if not (renpy.android or renpy.ios or renpy.emscripten or renpy.vita):
             renderers = renderers + [ "sw" ]
 
         if self.safe_mode:
@@ -2575,7 +2576,7 @@ class Interface(object):
         if not self.started:
             return
 
-        if background and not renpy.emscripten:
+        if background and not (renpy.emscripten or renpy.vita):
             self.bgscreenshot_event.clear()
             self.bgscreenshot_needed = True
 
@@ -3417,7 +3418,7 @@ class Interface(object):
             # Step 5: Preload images (on emscripten)
             elif step == 5:
 
-                if expensive and renpy.emscripten:
+                if expensive and (renpy.emscripten or renpy.vita):
                     renpy.display.im.cache.preload_thread_pass()
 
                 step += 1
@@ -4020,13 +4021,13 @@ class Interface(object):
                 elif ev.type == pygame.TEXTINPUT:
                     self.text_editing = None
 
-                elif ev.type == pygame.KEYMAPCHANGED:
+                #elif ev.type == pygame.KEYMAPCHANGED:
 
                     # Clear the mods when the keymap is changed, such as when
                     # an IME is selected. This fixes a problem on Windows 10 where
                     # super+space won't unset super.
-                    pygame.key.set_mods(0)
-                    continue
+                    #pygame.key.set_mods(0)
+                    #continue
 
                 elif self.text_editing and ev.type in [ pygame.KEYDOWN, pygame.KEYUP ]:
                     continue

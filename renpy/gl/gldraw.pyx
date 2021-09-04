@@ -142,8 +142,8 @@ cdef class GLDraw:
         """
         This is called after the main window has changed size.
         """
-
-        self.environ.deinit()
+        if not renpy.vita:
+            self.environ.deinit()
         self.rtt.deinit()
 
         gltexture.dealloc_textures()
@@ -224,7 +224,8 @@ cdef class GLDraw:
 
         try:
             self.rtt.init()
-            self.environ.init()
+            if not renpy.vita:
+                self.environ.init()
         except:
             renpy.display.interface.display_reset = True
 
@@ -232,7 +233,7 @@ cdef class GLDraw:
 
         fullscreen = renpy.game.preferences.fullscreen
 
-        if renpy.android or renpy.ios:
+        if renpy.android or renpy.ios or renpy.vita:
             fullscreen = True
 
         if renpy.game.preferences.physical_size:
@@ -263,7 +264,7 @@ cdef class GLDraw:
 
         size = renpy.display.core.get_size()
 
-        if force or (fullscreen != renpy.display.interface.fullscreen) or (size != self.physical_size):
+        if not renpy.vita and (force or (fullscreen != renpy.display.interface.fullscreen) or (size != self.physical_size)):
             renpy.display.interface.before_resize()
             self.on_resize()
 
@@ -290,7 +291,7 @@ cdef class GLDraw:
         else:
             physical_size = renpy.game.preferences.physical_size
 
-        if renpy.android or renpy.ios:
+        if renpy.android or renpy.ios or renpy.vita:
             fullscreen = True
         else:
             fullscreen = renpy.game.preferences.fullscreen
@@ -406,6 +407,17 @@ cdef class GLDraw:
             pwidth = 0
             pheight = 0
 
+        elif renpy.vita:
+            opengl = pygame.OPENGL
+            resizable = 0
+
+            pygame.display.gl_set_attribute(pygame.GL_RED_SIZE, 8)
+            pygame.display.gl_set_attribute(pygame.GL_GREEN_SIZE, 8)
+            pygame.display.gl_set_attribute(pygame.GL_BLUE_SIZE, 8)
+
+            pwidth = 960
+            pheight = 544
+
         else:
             opengl = pygame.OPENGL
 
@@ -463,7 +475,7 @@ cdef class GLDraw:
         else:
             gltexture.use_gl()
 
-        if renpy.android or renpy.ios:
+        if renpy.android or renpy.ios or renpy.vita:
             self.redraw_period = 1.0
         elif renpy.emscripten:
             # give back control to browser regularly
@@ -541,7 +553,7 @@ cdef class GLDraw:
                 "fbo",
                 "GL_ARB_framebuffer_object")
 
-        if use_fbo:
+        if use_fbo and not renpy.vita: # Temporary. Frame Buffer Objects are really bugged out
             renpy.display.log.write("Using FBO RTT.")
             self.rtt = glrtt_fbo.FboRtt()
             self.info["rtt"] = "fbo"

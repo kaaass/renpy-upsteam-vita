@@ -112,6 +112,7 @@ macintosh = False
 linux = False
 android = False
 ios = False
+vita = False
 emscripten = False
 
 # Should we enable experimental features and debugging?
@@ -164,6 +165,8 @@ elif platform.mac_ver()[0]:
     macintosh = True
 elif "ANDROID_PRIVATE" in os.environ:
     android = True
+elif sys.platform == 'vita':
+    vita = True
 elif sys.platform == 'emscripten' or "RENPY_EMSCRIPTEN" in os.environ:
     emscripten = True
 else:

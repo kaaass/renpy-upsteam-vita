@@ -53,7 +53,7 @@ init -1500:
         $ gles = False
         $ angle = False
 
-        if renpy.android or renpy.ios or renpy.emscripten:
+        if renpy.android or renpy.ios or renpy.emscripten or renpy.vita:
             $ gles = True
 
         elif renpy.windows:

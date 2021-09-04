@@ -170,7 +170,7 @@
 #if HAVE_STRINGIZE+0
 # define STRINGIZE(symbol) #symbol
 #else /* !HAVE_STRINGIZE */
-# define STRINGIZE(symbol) (no stringize operator available)
+# define STRINGIZE(symbol) ("no stringize operator available")
 #endif /* !HAVE_STRINGIZE */
 
 /* As per recommendation of GNU Coding Standards. */

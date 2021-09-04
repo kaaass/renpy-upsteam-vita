@@ -147,7 +147,7 @@ def launch_editor(filenames, line=1, transient=False):
     """
 
     # On mobile devices, we will never be able to launch the editor.
-    if renpy.mobile:
+    if renpy.mobile or renpy.vita:
         return True
 
     if editor is None:
