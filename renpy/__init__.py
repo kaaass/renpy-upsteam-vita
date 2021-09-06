@@ -62,7 +62,6 @@ import sys
 import os
 import copy
 import types
-import site
 
 ################################################################################
 # Version information
@@ -75,8 +74,11 @@ except ImportError:
     vc_version = 0
     official = False
     nightly = False
-
-official = official and getattr(site, "renpy_build_official", False)
+try:
+    import site
+    official = official and getattr(site, "renpy_build_official", False)
+except NotImplementedError:
+    official = False
 
 # The tuple giving the version number.
 version_tuple = (7, 4, 9, vc_version)
