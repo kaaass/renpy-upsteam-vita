@@ -60,7 +60,7 @@ def init():
     Initialize gamepad support.
     """
 
-    if not renpy.game.preferences.pad_enabled:
+    if not renpy.vita or not renpy.game.preferences.pad_enabled:
         return
 
     try:
