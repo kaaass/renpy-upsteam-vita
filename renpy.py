@@ -131,7 +131,7 @@ def path_to_saves(gamedir, save_directory=None):
             rv = "~/RenPy/" + renpy.config.save_directory
             return os.path.expanduser(rv)
     
-     elif renpy.vita:
+    elif renpy.vita:
         return "ux0:/Ren'Py Data/" + save_directory
 
     else:
