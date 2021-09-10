@@ -332,7 +332,7 @@ class Cache(object):
         else:
             rv = ce.surf
 
-        if not renpy.config.cache_surfaces:
+        if not renpy.config.cache_surfaces or renpy.vita:
 
             if ce.surf is not None:
                 renpy.display.draw.mutated_surface(ce.surf)
