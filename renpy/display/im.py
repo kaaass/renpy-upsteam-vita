@@ -172,7 +172,7 @@ class Cache(object):
             else:
                 self.cache_limit = int(renpy.config.image_cache_size_mb * 1024 * 1024 // 4)
         else:
-            self.cache_limit = int(130 * 1024 * 1024 // 4) # PSVITA CDRAM + Extra Main
+            self.cache_limit = int(128 * 1024 * 1024 // 4) # Remaining Memory (Safely)
 
     def quit(self): # @ReservedAssignment
         if not self.preload_thread.is_alive():
