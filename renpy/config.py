@@ -64,7 +64,7 @@ debug_sound = None
 rollback_enabled = True
 
 # If the rollback is longer than this, we may trim it.
-rollback_length = 128
+rollback_length = 30
 
 # If set to True, clicking while in rollback will keep the roll forward
 # buffer if the data has not changed.
@@ -76,7 +76,7 @@ fix_rollback_without_choice = False
 
 # The maximum number of steps the user can rollback the game,
 # interactively.
-hard_rollback_limit = 100
+hard_rollback_limit = 30
 
 # A list of functions returning lists of displayables that will be
 # added to the end of the display list.
@@ -874,7 +874,7 @@ all_nodes_rollback = False
 manage_gc = True
 
 # Default thresholds that apply to garbage collection.
-gc_thresholds = (25000, 10, 10)
+gc_thresholds = (700, 10, 10)
 
 # The threshold for a level 0 gc when we have the time.
 idle_gc_count = 2500

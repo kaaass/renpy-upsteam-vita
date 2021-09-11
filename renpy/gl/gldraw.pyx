@@ -619,7 +619,7 @@ cdef class GLDraw:
 
         powersave = renpy.game.preferences.gl_powersave
 
-        if not powersave:
+        if renpy.vita or not powersave:
             return False
 
         return not self.fast_redraw_frames
