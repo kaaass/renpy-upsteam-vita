@@ -529,7 +529,7 @@ def run_scan_thread():
             pass
 
         with scan_thread_condition:
-            scan_thread_condition.wait(5.0)
+            scan_thread_condition.wait(10.0)
 
 
 def quit(): # @ReservedAssignment
@@ -551,7 +551,7 @@ def init():
     location.add(FileLocation(renpy.config.savedir))
 
     # 2. Game-local savedir.
-    if (not renpy.mobile) and (not renpy.macapp):
+    if (not renpy.mobile) and (not renpy.macapp) and (not renpy.vita):
         path = os.path.join(renpy.config.gamedir, "saves")
         location.add(FileLocation(path))
 

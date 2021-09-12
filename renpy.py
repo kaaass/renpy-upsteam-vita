@@ -102,6 +102,9 @@ def path_to_saves(gamedir, save_directory=None):
         print("Saving to", rv)
         return rv
 
+    if renpy.vita:
+        return "ux0:/Ren'Py Data/" + save_directory
+
     # No save directory given.
     if not save_directory:
         return os.path.join(gamedir, "saves")
@@ -130,9 +133,6 @@ def path_to_saves(gamedir, save_directory=None):
         else:
             rv = "~/RenPy/" + renpy.config.save_directory
             return os.path.expanduser(rv)
-    
-    elif renpy.vita:
-        return "ux0:/Ren'Py Data/" + save_directory
 
     else:
         rv = "~/.renpy/" + save_directory
