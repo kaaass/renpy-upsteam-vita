@@ -529,7 +529,7 @@ def run_scan_thread():
             pass
 
         with scan_thread_condition:
-            scan_thread_condition.wait(10.0)
+            scan_thread_condition.wait(20.0)
 
 
 def quit(): # @ReservedAssignment
