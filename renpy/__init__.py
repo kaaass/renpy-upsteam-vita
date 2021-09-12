@@ -593,7 +593,7 @@ def reload_all():
     returned.
     """
 
-    if mobile:
+    if mobile or renpy.vita:
         raise Exception("Reloading is not supported on mobile platforms.")
 
     import renpy.style

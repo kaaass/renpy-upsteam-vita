@@ -172,7 +172,7 @@ class Cache(object):
             else:
                 self.cache_limit = int(renpy.config.image_cache_size_mb * 1024 * 1024 // 4)
         else:
-            self.cache_limit = int(128 * 1024 * 1024 // 4) # Remaining Memory (Safely)
+            self.cache_limit = int(100 * 1024 * 1024 // 4) # Some amount that makes sense. Settling with this for now
 
     def quit(self): # @ReservedAssignment
         if not self.preload_thread.is_alive():
