@@ -175,7 +175,7 @@ else:
     linux = True
 
 # A flag that's true if we're on a smartphone or tablet-like platform.
-mobile = android or ios or emscripten
+mobile = android or ios or emscripten or vita
 
 # A flag that's set to true if the game directory is bundled inside a mac app.
 macapp = False
