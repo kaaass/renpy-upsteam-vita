@@ -137,7 +137,7 @@ class Model(renpy.display.core.Displayable):
         and `main` parameters are set to true.
         """
 
-        self.texture(displayable, focus=True, main=True, fit=False)
+        self.texture(displayable, focus=True, main=True, fit=fit)
         return self
 
     def shader(self, shader):
@@ -171,7 +171,7 @@ class Model(renpy.display.core.Displayable):
         self.uniforms[name] = value
         return self
 
-    def properties(self, name, value):
+    def property(self, name, value):
         """
         :doc: model_displayable method
 
