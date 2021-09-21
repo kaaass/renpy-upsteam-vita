@@ -698,16 +698,26 @@ class Displayable(renpy.object.Object):
 
         return
 
-    def _tts_common(self, default_alt=None):
+    def _tts_common(self, default_alt=None, reverse=False):
 
         rv = [ ]
 
-        for i in self.visit()[::-1]:
+        if reverse:
+            order = 1
+        else:
+            order = -1
+
+        speech = ""
+
+        for i in self.visit()[::order]:
             if i is not None:
                 speech = i._tts()
 
                 if speech.strip():
                     rv.append(speech)
+
+                    if isinstance(speech, renpy.display.tts.TTSDone):
+                        break
 
         rv = ": ".join(rv)
         rv = rv.replace("::", ":")
@@ -720,6 +730,8 @@ class Displayable(renpy.object.Object):
 
         if alt is not None:
             rv = renpy.substitutions.substitute(alt, scope={ "text" : rv })[0]
+
+        rv = type(speech)(rv)
 
         return rv
 
@@ -1614,6 +1626,9 @@ def get_safe_mode():
 
     if renpy.safe_mode_checked:
         return False
+
+    if getattr(renpy.game.args, "safe_mode", False):
+        return True
 
     try:
         if renpy.windows:
@@ -2784,7 +2799,7 @@ class Interface(object):
                 self.transition_from.pop(None, None)
                 continue
 
-            start = self.transition_time.get(l, self.frame_time)
+            start = self.transition_time.get(l, self.frame_time) or 0
             delay = self.transition_delay.get(l, 0)
 
             if (self.frame_time - start) >= delay:
@@ -4170,6 +4185,11 @@ class Interface(object):
 
                     if ev.type != TIMEEVENT:
                         self.post_time_event()
+
+                    # On mobile, if an event originates from the touch mouse, unfocus.
+                    if renpy.mobile and (ev.type == pygame.MOUSEBUTTONUP) and getattr(ev, "which", 0) == 4294967295:
+                        if not self.restart_interaction:
+                            renpy.display.focus.mouse_handler(None, -1, -1, default=False)
 
                 # Check again after handling the event.
                 needs_redraw |= renpy.display.render.check_redraws()
