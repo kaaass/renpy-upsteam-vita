@@ -2,6 +2,298 @@
 Changelog (Ren'Py 7.x-)
 =======================
 
+.. _renpy-7.5.0:
+.. _renpy-8.0.0:
+
+7.5 / 8.0
+=========
+
+ATL
+---
+
+It's now possible to include a block as part of an ATL interpolation.
+This means that::
+
+    linear 2.0:
+        xalign 1.0
+        yalign 1.0
+
+is now allowed, and equivalent to::
+
+    linear 2.0 xalign 1.0 yalign 1.0
+
+Information about :ref:`ATL Transitions <atl-transitions>` and :ref:`Special ATL Keyword Parameters <atl-keyword-parameters>`
+has been added to the documentation.
+
+Image Gallery
+-------------
+
+The :class:`Gallery` class now has a new field, `image_screen`, that can be
+used to customize how gallery image are displayed.
+
+The :func:`Gallery.image` and :func:`Gallery.unlock_image` methods now
+take keywork arguments beginning with `show\_`. These arguments have the
+`show\_` prefix stripped, and are then passed to the Gallery.image_screen
+as additional keyword arguments. This can be used to include additional
+information with the images in the gallery.
+
+ChromeOS
+--------
+
+When running as an Android application on a ChromeOS device, the "chromeos"
+variant will be selected.
+
+Boxes, Grids and Vpgrids
+------------------------
+
+A :ref:`showif <sl-showif>` statement inside a :ref:`vbox <sl-vbox>` or :ref:`hbox <sl-hbox>`
+will not be surrounded with :propref:`spacing` when the condition is false and the child
+displayable is not shown.
+
+Having an overfull vpgrid - when both ``rows`` and ``cols`` are specified - is now
+disallowed.
+
+Having an underfull vpgrid now raises an error unless the warning is opted-out using
+either the ``allow_underfull`` property or :var:`config.allow_underfull_grids`, the
+former taking precedence on the latter.
+
+A vpgrid with both cols and rows specified is underfull if and when it has less than
+rows \* cols children. A vpgrid with either cols or rows specified is underfull if and when its number of
+children is not a multiple of the specified value.
+
+Features
+--------
+
+The new `predict` argument to :func:`renpy.pause` makes it possible to pause
+until image prediction is finished, including prediction caused by
+:func:`renpy.start_predict` and :func:`renpy.start_predict_screen`.
+
+It is now possible to select a language other than the default when
+extracting dialogue.
+
+The screen language ``add`` statement now takes an `alt` property,
+making it possible to write::
+
+    screen test():
+        add "icon.png" alt "The Icon"
+
+The :func:`Hide` action now takes None for the screen name, to hide
+the current screen.
+
+:func:`Placeholder` now takes a `text` argument, that overrides the
+automatically determined text with something the creator specifies.
+
+The :func:`renpy.dynamic` function can now make variables in namespaces
+dynamic.
+
+The new :var:`config.always_shown_screens` variable allows one to define
+screens that are always shown (even in the main and game menus). See also
+the existing :var:`config.overlay_screens`.
+
+The location and size of the OpenGL viewport is made available to shaders as
+u_viewport.
+
+The new RENPY_PATH_TO_SAVES environment variable makes it possible to control
+where Ren'Py places system-level saves. The RENPY_MULTIPERSISTENT variable has
+been documented, and controls the same thing with multipersistent data.
+
+The :propref:`focus_mask` style property now defaults to None for drag displayables.
+This improves performance, but means that the displayable can be dragged by
+transparent pixels.
+
+Other changes
+-------------
+
+The :propref:`activate_sound` plays when activating a drag displayable.
+
+The :func:`VariableValue`, :func:`FieldValue`, and :func:`DictValue` Bar Values
+can now call :func:`Return`, to cause the interaction to return a specific value.
+
+The :propref:`adjust_spacing` property is now set to False for dialogue and
+narration in new games. This might cause the spacing of text to change, when
+the game is resized, in exchange for keeping it stable when extend is used.
+
+Playing or stopping music on a channel now unpauses that channel.
+
+.. _renpy-7.4.11:
+
+
+7.4.11
+======
+
+The gui.variant Decorator
+-------------------------
+
+A new gui.variant decorator has been added to Ren'Py. This should be used
+to decorate a function with the name of a variant, and causes that function
+to be run, if the variant is active, when the game is first started, and then
+each time the gui is rebuilt (which happens when :func:`gui.rebuild` is called,
+when a gui preference is changed, or when the translation changes.)
+
+This is expected to be used like::
+
+    init python:
+
+        @gui.variant
+        def small():
+
+            ## Font sizes.
+            gui.text_size = gui.scale(30)
+            gui.name_text_size = gui.scale(36)
+            # ...
+
+as a replacement for::
+
+    init python:
+
+        if renpy.variant("small"):
+            ## Font sizes.
+            gui.text_size = gui.scale(30)
+            gui.name_text_size = gui.scale(36)
+            # ...
+
+Which only runs once, and lost the changes if the gui was ever rebuilt.
+
+Fixes
+-----
+
+The new :var:`config.mouse_focus_clickthrough` variable determines if clicks that
+cause the game window to be focused will be processed normally.
+
+The launcher now runs with :var:`config.mouse_focus_clickthrough` true, which
+means that it will only take a single click to launch the game.
+
+The `caret_blink` property of Input is now exposed through screen language.
+
+When a Live2D motion contains a curve with a shorter duration then the motion
+it is part of, the last value of the curve is retained to the end of the
+motion.
+
+Rare issues with a displayable being replaced by a displayable of a different
+type are now guarded against. This should only occur when a game is updated
+between saves.
+
+Modal displayables now prevent pauses from ending.
+
+An issue that could cause images to not display in some cases (when a displayable
+was invalidated) has been fixed.
+
+Starting a movie no longer causes paused sounds to unpause.
+
+AudioData objects are no longer stored in the persistent data. Such objects
+are removed when persistent data is loaded, if present.
+
+Platform variables like renpy.android and renpy.ios are now set to follow
+the emulated platform, when Ren'Py is emulating ios or android.
+
+When in the iOS and Android emulator, the mobile rollback side is used.
+
+Ren'Py will now always run an `unhovered` action when a displayable (or its
+replacement) remains shown, and the focus changes. Previously, the unhovered
+action would not run when the loss of focus was caused by showing a second
+screen.
+
+When :var:`config.log` is true, the selected choice is now logged properly.
+
+The new :func:`gui.variant` function makes it possible to work around
+an issue in the standard gui where the calling :func:`gui.rebuild` would cause
+gui variants to reset.
+
+The web browser now checks for progressively downloaded images once per
+frame, allowing images to be loaded into the middle of an animation.
+
+Live2D now uses saturation arithmetic to combine motion fadeins and fadeouts,
+such that if the fadein contributes 80% of a parameter value, and the
+fadeout contributes 20% of the value, 100% of the value comes from
+the two motions. (Previously, the fadein and fadeout were applied
+independently, such that together, the fadein and fadeout would
+contribute 84% of the value, with the remaining 16% taken from
+the default.)
+
+When fading from one sequence of Live2D motions to another, the original
+sequence ends when a motion fades out.
+
+When preserving screens in the old state for a transition, the later_at_list
+and camera lists are taken from the old state, preventing unexpected changes.
+
+The :tpref:`gl_depth` property now causes Ren'Py to use GL_LEQUALS,
+which more closely matches Ren'Py's semantics.
+
+The 4-component constructor for matrices has been fixed.
+
+Ren'Py now cleans out the android build directories when producing a Android
+App Bundle (AAB) file, preventing problems that might be caused when packaging
+multiple games, or a single game where files are deleted.
+
+Live2d now properly handles seamless animation when the same motion is repeated
+in a displayable. (For example, ``show eileen m1 m1 m2`` where ``m1`` is seamless.)
+
+Mouse motion is now tracked on Chrome OS devices. This prevents the mouse cursor
+from being hidden between clicks.
+
+An issue with windows partially rendering on ChromeOS has been resolved.
+
+An issue with transcludes in screens has been fixed.
+
+An issue that could prevent a transform with both :tpref:`perspective` and
+:tpref:`mesh` true from displaying has been fixed.
+
+Buttons now only propagate transform state to direct children, not to
+children accessed through ImageReferences.
+
+The ``repeat_`` modifier can now be applied to gamepad events.
+
+A new :var:`config.debug_prediction` variable has been split out of
+:var:`config.debug_image_cache`. This controls the logging of
+prediction errors to the console and log.txt, making the latter
+variable act as documented.
+
+Translations
+------------
+
+The German, Indonesian, Polish, and Russian translations have been updated.
+
+
+.. _renpy-7.4.10:
+
+7.4.10
+======
+
+Fixes
+-----
+
+This released fixes an issue that prevented large images (larger than
+maximum texture size, 4096x4069 on most platforms) from being displayed
+by the gl2 renderer.
+
+Dialogue lines that end with the {nw} tag now do not wait for voice to
+finish.
+
+Dialogue lines that contain {fast} (including those created
+with the ``extend`` character) sustain the voice from the previous
+statement.
+
+These supplement a change introduced in 7.4.9 (that missed the changelog),
+where timed {w} and {p} text tags will no longer wait for voice to stop
+playing before advancing.
+
+The :propref:`focus_mask` property can be slow, but several changes to
+have been included to fix pathological cases of slowness. While it's best
+to avoid it if possible (the default will change to None for drags, where
+it's True now, in 7.5), this should allow for some speedups where it is
+True.
+
+Live2D support no longer logs to log.txt by default. That logging can be
+restored with :var:`config.log_live2d_loading`.
+
+A problem with automatically determining the Android store has been fixed.
+
+
+Translations
+------------
+
+The Indonesian and Polish translations were updated.
+
 .. _renpy-7.4.9:
 
 7.4.9
@@ -55,6 +347,27 @@ request permissions on Android beyond those that Ren'Py users itself.
 When creating Android keys, Ren'Py will back them up to the same place it
 backs up script files. This isn't a substitute for making your own backups.
 
+An issue that could cause black screenshots on Android and other platforms has
+been (hopefully) fixed.
+
+The permissions of saves and log.txt are now explicitly managed on Android
+to make these files group-readable, ensuring the player can access logs and
+files.
+
+iOS
+---
+
+The iOS build process has been updated create a project that is more complete
+after the initial generation, with the launch screen set up and no unused
+schemas.
+
+As always, it's necessary to create a new iOS project each time Ren'Py is
+updated.
+
+The inclusion of :ref:`Pyobjus <pyobjus>` with Ren'Py is now documented. The
+Pyobjus library allows games to call APIs on iOS and macOS.
+
+
 Updater
 -------
 
@@ -94,7 +407,7 @@ window to fade in if the descriptive text is disabled.
 The order in which self-voicing reads out layers, screens, and displayables
 directly on a layer has changed, such that the screen and displayables that
 are drawn last (closest to the player) are read out first. This does not
-apply to displayables withoin a screen or layout displayable, which are
+apply to displayables within a screen or layout displayable, which are
 still read first to last.
 
 Modal screens cause self-voicing to stop after the contents of the screen
@@ -114,11 +427,30 @@ is deprecated, and the new wrapper, :tpref:`xysize`, should be used instead.
 Other
 -----
 
+The :ref:`bar <sl-bar>` screen language statement now has a new property,
+`released`, that gives an action to perform when the bar is released.
+
+It's now documented that the :ref:`key <sl-key>` screen language statement
+can take a list of keysyms.
+
+On Linux, if Ren'Py detects the "C" locale, it will enable support for
+UTF-8 filesystems. This is intended to provide better compatibility with
+Steam Linux, which uses this locale.
+
+A new Polish translation of the launcher has been added.
+
+The music room has been updated to include a TogglePause button,
+that pauses and unpauses music.
+
+There is now a --safe-mode flag, that starts Ren'Py in safe mode.
+
+Mute now mutes movies.
+
 An issue that caused analysis files to grow unconstrained, slowing down
 Ren'Py startup, has been fixed. The analysis file will be reduced in size
 when the game scripts are recompiled.
 
-The :propref:`hover_sound` and :properef:`activate_sound` properties now
+The :propref:`hover_sound` and :propref:`activate_sound` properties now
 apply to bars.
 
 When dispatching events in ATL, if an event with a ``selected_`` prefix is not
@@ -133,9 +465,6 @@ unofficial builds.
 The ``default`` statement is applied after each rollback.
 
 A regression that could prevent text in buttons from changing has been fixed.
-
-The inclusion of :ref:`Pyobjus <pyobjus>` with Ren'Py is now documented. The
-Pyobjus library allows games to call APIs on iOS and macOS.
 
 
 .. _renpy-7.4.8:

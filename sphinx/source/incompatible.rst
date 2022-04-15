@@ -13,6 +13,69 @@ Incompatible changes to the GUI are documented at :ref:`gui-changes`, as
 such changes only take effect when the GUI is regenerated.
 
 
+.. _incompatible-8.0.0:
+.. _incompatible-7.5.0:
+
+7.5.0/8.0.0
+-----------
+
+Showif statements no longer take up space inside a vbox or hbox when the
+condition is false and the child is hidden. To revert this change::
+
+    define config.box_skip_false_showif = False
+
+The :propref:`focus_mask` style property now defaults to None for drag displayables.
+This improves performance, but means that the displayable can be dragged by
+transparent pixels. To revert this, the focus_mask property can be set to True
+for individual drags, or globally with::
+
+    style drag:
+        focus_mask True
+
+Both options reduce performance.
+
+The :propref:`outline_scaling` style property now defaults to "linear". This means
+the window scaling factor is applied to the outline size, and then rounded to an
+integer. This can cause multiple outlines of similar sizes to disappear. To revert
+this, the outline_scaling property can be set to "step" for individual text elements,
+or globally with::
+
+    style default:
+        outline_scaling "step"
+
+The :tpref:`crop_relative` transform property now take string values instead of
+booleans. The behavior associated with the former True value is now the default
+behavior. Absolute numbers of pixels to set the cropping should be expressed with
+ints or ``absolute`` numbers. To revert to the former default behavior, which casts
+floats to an absolute number of pixels, use::
+
+    define config.crop_relative_default = False
+
+However, be warned that like most things documented only on this page, this will
+conflict with - and cannot be used at the same time as - some other new features.
+
+The platform-specific directories inside lib/ have had name changes. The
+``lib/windows-x86_64`` directory is now ``lib/py2-windows-x86_64``. This
+change helps support the development of the Python 3 powered Ren'Py 8.
+These directories are not documented, and may change between Ren'Py
+versions, but we do guarantee that ``sys.executable`` is set.
+
+Vpgrids cannot be overfull anymore, and can only be underfull if the
+``allow_underfull`` property is passed, or if :var:`config.allow_underfull_grids` is
+set to True.
+
+
+.. _incompatible-7.4.11:
+
+7.4.11
+------
+
+Ren'Py will now run a button's unhovered property even when focus is
+changed by default, such as when a screen is shown or unshown. To
+revert to the old behavior, use::
+
+    define config.always_unfocus = False
+
 .. _incompatible-7.4.9:
 
 7.4.9
@@ -44,7 +107,7 @@ this change::
 
     define config.adjust_minimums = False
 
-An ATL displayable in a screen will now start its animation when it first
+An ATL displayable will now start its animation when it first
 appears, rather than when the screen itself is shown. To revert this change::
 
     define config.atl_start_on_show = False

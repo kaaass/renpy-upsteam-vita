@@ -35,12 +35,23 @@ language. This is called the None language, regardless of what
 language it actually is. (For example, if the game was written in
 English, English will be the None language.)
 
-When the None language is selected, most of Ren'Py's translation
-functionality is disabled.
-
 Alternate languages are referred to by names which can double as
 Python identifiers (starts with a letter or underscore, followed by
 letters, numbers, and underscores).
+
+When the None language is selected, most of Ren'Py's translation
+functionality is disabled, with the notable exception of Renpy's
+internal built-in strings, from the accessibility menu for example.
+Theses strings are not found in your project's code, yet they will
+still be included in the distributed version of the game. You can
+find them in the ``game/tl/None/common.rpym`` file, whose only
+purposes are 1) to provide translations to these strings when the None
+language is not english, and 2) to allow creators to customize these
+strings for their game.
+
+The language of the launcher at the time when the project is
+created will be the language this file will initially translate the
+internal strings to.
 
 Generating Translation Files
 ============================
@@ -363,20 +374,21 @@ styles – when translating a game. Ren'Py handles this with ``translate
 style`` blocks and ``translate python`` blocks. These blocks can
 change language-related variables and styles. For example::
 
-  translate piglatin style default:
-      font "stonecutter.ttf"
+    translate piglatin style default:
+        font "stonecutter.ttf"
 
-or equivalently::
+More usually, the font used for dialogue is set with :var:`gui.text_font`, which
+can be customized using:
 
-  translate piglatin python:
-      style.default.font = "stonecutter.ttf"
+    translate piglatin python:
+        gui.text_font = "stonecutter.ttf"
 
 When a language is activated – either at the start of the game, or
 after a language change – Ren'Py resets the styles to their contents
-at the end of the init phase. It then runs all ``translate python`` blocks
-and translate style blocks associated with the current language, guaranteeing
-that blocks appearing earlier in a file are executed first. Finally, it
-rebuilds styles, allowing the changes to take effect.
+at the end of the init phase. It then runs all ``translate python`` blocks,
+all style blocks, and all translate style blocks associated with the current
+language, guaranteeing that blocks appearing earlier in a file are executed first.
+Finally, it rebuilds styles, allowing the changes to take effect.
 
 Style translations may be added to any .rpy file.
 

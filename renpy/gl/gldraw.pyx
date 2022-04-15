@@ -1,6 +1,6 @@
 #cython: profile=False
 #@PydevCodeAnalysisIgnore
-# Copyright 2004-2021 Tom Rothamel <pytom@bishoujo.us>
+# Copyright 2004-2022 Tom Rothamel <pytom@bishoujo.us>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
@@ -42,8 +42,8 @@ import time
 import math
 
 cimport renpy.display.render as render
-cimport gltexture
-import gltexture
+cimport renpy.gl.gltexture as gltexture
+import renpy.gl.gltexture as gltexture
 
 # Cache various externals, so we can use them more efficiently.
 cdef int DISSOLVE, IMAGEDISSOLVE, PIXELLATE, FLATTEN
@@ -226,7 +226,7 @@ cdef class GLDraw:
             self.rtt.init()
             if not renpy.vita:
                 self.environ.init()
-        except:
+        except Exception:
             renpy.display.interface.display_reset = True
 
     def resize(self):
@@ -332,8 +332,8 @@ cdef class GLDraw:
         bound_h = min(visible_h, head_h)
 
         self.info["max_window_size"] = (
-            int(round(min(bound_h * virtual_ar, bound_w))),
-            int(round(min(bound_w / virtual_ar, bound_h))),
+            round(min(bound_h * virtual_ar, bound_w)),
+            round(min(bound_w / virtual_ar, bound_h)),
             )
 
         if renpy.windows or renpy.linux or renpy.macintosh:
@@ -351,8 +351,8 @@ cdef class GLDraw:
                 pheight = min(visible_h, pheight, head_h)
                 pwidth, pheight = min(pheight * virtual_ar, pwidth), min(pwidth / virtual_ar, pheight)
 
-        pwidth = int(round(pwidth))
-        pheight = int(round(pheight))
+        pwidth = round(pwidth)
+        pheight = round(pheight)
 
         pwidth = max(pwidth, 256)
         pheight = max(pheight, 256)
@@ -748,8 +748,6 @@ cdef class GLDraw:
         else:
             reverse = IDENTITY
 
-        surftree.is_opaque()
-
         self.draw_render_textures(surftree, 0)
 
         xmul = 1.0 * self.drawable_size[0] / self.physical_size[0]
@@ -843,7 +841,7 @@ cdef class GLDraw:
             non_aligned |= (rend.forward.xdy != 0)
             non_aligned |= (rend.forward.ydy != 0)
 
-        for child, cxo, cyo, focus, main in rend.visible_children:
+        for child, cxo, cyo, focus, main in rend.children:
 
             self.draw_render_textures(child, non_aligned)
 
@@ -890,8 +888,8 @@ cdef class GLDraw:
             if isinstance(what, gltexture.TextureGrid):
 
                 if (not subpixel) and reverse.is_unit_aligned():
-                    xo = round(xo)
-                    yo = round(yo)
+                    xo = float(round(xo))
+                    yo = float(round(yo))
 
                 self.set_clip(clip)
 
@@ -1066,7 +1064,7 @@ cdef class GLDraw:
         else:
             child_reverse = reverse
 
-        for child, cx, cy, focus, main in rend.visible_children:
+        for child, cx, cy, focus, main in rend.children:
 
             # The type of cx and cy depends on if this is a subpixel blit or not.
             if type(cx) is float:
@@ -1102,9 +1100,6 @@ cdef class GLDraw:
             clip = self.default_clip
 
             self.draw_transformed(what, clip, 0, 0, 1.0, 1.0, self.virt_to_draw, renpy.config.nearest_neighbor, False)
-
-        if isinstance(what, render.Render):
-            what.is_opaque()
 
         rv = gltexture.texture_grid_from_drawing(width, height, draw_func, self.rtt, self.environ)
 
@@ -1186,9 +1181,6 @@ cdef class GLDraw:
             clip = (0, 0, width, height)
 
             draw.draw_transformed(what, clip, 0, 0, 1.0, 1.0, reverse, renpy.config.nearest_neighbor, False)
-
-        if isinstance(what, render.Render):
-            what.is_opaque()
 
         rv = gltexture.texture_grid_from_drawing(width, height, draw_func, self.rtt, self.environ)
 
@@ -1420,7 +1412,7 @@ cdef class Environ(object):
 # classes have been created.
 try:
     from . import glrtt_copy
-except:
+except Exception:
     glrtt_copy = None
 
 # Copy doesn't work on iOS.

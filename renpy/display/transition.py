@@ -1,4 +1,4 @@
-# Copyright 2004-2021 Tom Rothamel <pytom@bishoujo.us>
+# Copyright 2004-2022 Tom Rothamel <pytom@bishoujo.us>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
@@ -25,9 +25,11 @@
 # so that prediction of images works.
 
 from __future__ import division, absolute_import, with_statement, print_function, unicode_literals
-from renpy.compat import *
+from renpy.compat import PY2, basestring, bchr, bord, chr, open, pystr, range, round, str, tobytes, unicode # *
 
-import renpy.display
+
+
+import renpy
 from renpy.display.render import render
 
 
@@ -36,6 +38,9 @@ class Transition(renpy.display.core.Displayable):
     This is the base class of most transitions. It takes care of event
     dispatching.
     """
+
+    new_widget = None # type:renpy.display.core.Displayable|None
+    old_widget = None # type:renpy.display.core.Displayable|None
 
     def __init__(self, delay, **properties):
         super(Transition, self).__init__(**properties)
@@ -202,7 +207,7 @@ def Fade(out_time,
          ):
     """
     :doc: transition function
-    :args: (out_time, hold_time, in_time, color="#000")
+    :args: (out_time, hold_time, in_time, *, color="#000")
     :name: Fade
 
     Returns a transition that takes `out_time` seconds to fade to
@@ -315,7 +320,7 @@ class Pixellate(Transition):
 class Dissolve(Transition):
     """
     :doc: transition function
-    :args: (time, alpha=False, time_warp=None)
+    :args: (time, alpha=False, time_warp=None, **properties)
     :name: Dissolve
 
     Returns a transition that dissolves from the old scene to the new scene.
@@ -330,6 +335,11 @@ class Dissolve(Transition):
         A function that adjusts the timeline. If not None, this should be a
         function that takes a fractional time between 0.0 and 1.0, and returns
         a number in the same range.
+
+    When the dissolve will be scaled to less than half its natural size, the
+    :propref:`mipmap` style property can be set to True. This will cause mipmaps
+    to be generated, which will make the dissolve consume more GPU resources,
+    but will reduce artifacts.
     """
 
     __version__ = 1
@@ -370,7 +380,7 @@ class Dissolve(Transition):
         width = min(top.width, bottom.width)
         height = min(top.height, bottom.height)
 
-        rv = renpy.display.render.Render(width, height, opaque=not (self.alpha or renpy.config.dissolve_force_alpha))
+        rv = renpy.display.render.Render(width, height)
 
         rv.operation = renpy.display.render.DISSOLVE
         rv.operation_alpha = self.alpha or renpy.config.dissolve_force_alpha
@@ -401,7 +411,7 @@ class Dissolve(Transition):
 class ImageDissolve(Transition):
     """
     :doc: transition function
-    :args: (image, time, ramplen=8, reverse=False, alpha=True, time_warp=None)
+    :args: (image, time, ramplen=8, reverse=False, alpha=True, time_warp=None, **properties)
     :name: ImageDissolve
 
     Returns a transition that dissolves the old scene into the new scene, using
@@ -439,6 +449,11 @@ class ImageDissolve(Transition):
         define circirisout = ImageDissolve("circiris.png", 1.0)
         define circirisin = ImageDissolve("circiris.png", 1.0, reverse=True)
         define circiristbigramp = ImageDissolve("circiris.png", 1.0, ramplen=256)
+
+    When the dissolve will be scaled to less than half its natural size, the
+    :propref:`mipmap` style property can be set to True. This will cause mipmaps
+    to be generated, which will make the dissolve consume more GPU resources,
+    but will reduce artifacts.
     """
 
     __version__ = 1
@@ -533,7 +548,7 @@ class ImageDissolve(Transition):
         width = min(bottom.width, top.width, image.width)
         height = min(bottom.height, top.height, image.height)
 
-        rv = renpy.display.render.Render(width, height, opaque=not (self.alpha or renpy.config.dissolve_force_alpha))
+        rv = renpy.display.render.Render(width, height)
 
         complete = st / self.delay
 
@@ -586,7 +601,7 @@ class ImageDissolve(Transition):
 class AlphaDissolve(Transition):
     """
     :doc: transition function
-    :args: (control, delay=0.0, alpha=False, reverse=False)
+    :args: (control, delay=0.0, alpha=False, reverse=False, **properties)
 
     Returns a transition that uses a control displayable (almost always some
     sort of animated transform) to transition from one screen to another. The
@@ -606,6 +621,11 @@ class AlphaDissolve(Transition):
         If true, the alpha channel is reversed. Opaque areas are taken
         from the old image, while transparent areas are taken from the
         new image.
+
+    When the dissolve will be scaled to less than half its natural size, the
+    :propref:`mipmap` style property can be set to True. This will cause mipmaps
+    to be generated, which will make the dissolve consume more GPU resources,
+    but will reduce artifacts.
      """
 
     mipmap = None
@@ -651,7 +671,7 @@ class AlphaDissolve(Transition):
 
         control = render(self.control, width, height, st, at)
 
-        rv = renpy.display.render.Render(width, height, opaque=not self.alpha)
+        rv = renpy.display.render.Render(width, height)
 
         rv.operation = renpy.display.render.IMAGEDISSOLVE
         rv.operation_alpha = self.alpha or renpy.config.dissolve_force_alpha

@@ -69,7 +69,7 @@ python early:
         fn = fn.replace("game/", "")
 
         with renpy.notl_file(fn) as f:
-            data = f.read()
+            data = f.read().decode("utf-8")
 
         rawlines = [ i.rstrip() for i in data.split("\n") ]
 
@@ -335,7 +335,7 @@ python early:
 
 
 # A preference that controls if translations are shown.
-define persistent.show_translation_marker = False
+default persistent.show_translation_marker = False
 
 init python:
 
@@ -444,14 +444,14 @@ init python:
 
             last_blank = not i
 
+            i = regex.sub(translate, i)
+
+            if not (persistent.show_translation_marker or showtrans):
+                i = re.sub(r'__?\((".*?")\)', r'\1', i)
+                i = re.sub(r"__?\(('.*?')\)", r'\1', i)
+                i = i.replace("!t]", "]")
+
             if not raw:
-                i = regex.sub(translate, i)
-
-                if not (persistent.show_translation_marker or showtrans):
-                    i = re.sub(r'__?\((".*?")\)', r'\1', i)
-                    i = re.sub(r"__?\(('.*?')\)", r'\1', i)
-                    i = i.replace("!t]", "]")
-
                 i = quote(i)
                 i = regex.sub(colorize, i)
 
@@ -564,19 +564,18 @@ init python hide:
     # A list of files we will be scanning.
     files = [ ]
 
-    for i in os.listdir(config.gamedir):
+    for i in renpy.list_files():
         if i.endswith(".rpy"):
-            files.append(os.path.join(config.gamedir, i))
+            files.append(i)
 
     for fn in files:
 
-        f = file(fn, "r")
+        lines = renpy.file(fn).read().decode("utf-8").splitlines()
 
         open_examples = set()
 
-        for l in f:
+        for l in lines:
 
-            l = l.decode("utf-8")
             l = l.rstrip()
 
             m = re.match("\s*#begin (\w+)", l)
@@ -606,8 +605,6 @@ init python hide:
 
         if open_examples:
             raise Exception("Examples %r remain open at the end of %r" % (open_examples, fn))
-
-        f.close()
 
 
 

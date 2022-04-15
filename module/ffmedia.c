@@ -13,6 +13,10 @@
 #include <stdlib.h>
 #endif
 
+#ifndef _WIN32
+#define USE_POSIX_MEMALIGN
+#endif
+
 /* Should a mono channel be split into two equal stero channels (true) or
  * should the energy be split onto two stereo channels with 1/2 the energy
  * (false).
@@ -293,7 +297,11 @@ static void deallocate(MediaState *ms) {
 		}
 
 		if (sqe->pixels) {
+#ifndef USE_POSIX_MEMALIGN
 			SDL_free(sqe->pixels);
+#else
+			free(sqe->pixels);
+#endif
 		}
 		av_free(sqe);
 	}
@@ -963,7 +971,13 @@ int media_video_ready(struct MediaState *ms) {
 			SurfaceQueueEntry *sqe = dequeue_surface(&ms->surface_queue);
 			ms->surface_queue_size -= 1;
 
-			SDL_free(sqe->pixels);
+			if (sqe->pixels) {
+#ifndef USE_POSIX_MEMALIGN
+				SDL_free(sqe->pixels);
+#else
+				free(sqe->pixels);
+#endif
+			}
 			av_free(sqe);
 
 			consumed = 1;
@@ -1102,8 +1116,8 @@ static int decode_thread(void *arg) {
 	ms->video_stream = -1;
 	ms->audio_stream = -1;
 
-	for (int i = 0; i < ctx->nb_streams; i++) {
-		if (ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+	for (unsigned int i = 0; i < ctx->nb_streams; i++) {
+		if (ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
 			if (ms->want_video && ms->video_stream == -1) {
 				ms->video_stream = i;
 			}
@@ -1264,8 +1278,8 @@ static int decode_sync_start(void *arg) {
 	ms->video_stream = -1;
 	ms->audio_stream = -1;
 
-	for (int i = 0; i < ctx->nb_streams; i++) {
-		if (ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+	for (unsigned int i = 0; i < ctx->nb_streams; i++) {
+		if (ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
 			if (ms->want_video && ms->video_stream == -1) {
 				ms->video_stream = i;
 			}
@@ -1370,7 +1384,7 @@ int media_read_audio(struct MediaState *ms, Uint8 *stream, int len) {
 	int rv = 0;
 
 	if (ms->audio_duration >= 0) {
-		unsigned int remaining = (ms->audio_duration - ms->audio_read_samples) * BPS;
+		int remaining = (ms->audio_duration - ms->audio_read_samples) * BPS;
 		if (len > remaining) {
 			len = remaining;
 		}

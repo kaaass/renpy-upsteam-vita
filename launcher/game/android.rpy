@@ -1,4 +1,4 @@
-﻿# Copyright 2004-2021 Tom Rothamel <pytom@bishoujo.us>
+﻿# Copyright 2004-2022 Tom Rothamel <pytom@bishoujo.us>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
@@ -135,6 +135,8 @@ init python:
             return NO_SDK_TEXT
         if state == ANDROID_NO_KEY:
             return NO_KEY_TEXT
+        if state == ANDROID_NO_BUNDLE_KEY:
+            return NO_BUNDLE_KEY_TEXT
         if state == ANDROID_NO_CONFIG:
             return NO_CONFIG_TEXT
         if state == ANDROID_NO_BUNDLE:
@@ -252,7 +254,7 @@ init python:
                         parent = os.path.dirname(p.path)
                         destination_dir = os.path.join(parent, destination)
 
-            except:
+            except Exception:
                 destination_dir = None
 
             dir_to_open = source_dir
@@ -263,7 +265,7 @@ init python:
 
                 try:
                     os.makedirs(destination_dir)
-                except:
+                except Exception:
                     pass
 
                 try:
@@ -273,7 +275,7 @@ init python:
 
                     dir_to_open = destination_dir
 
-                except:
+                except Exception:
                     import traceback
                     traceback.print_exc()
                     pass
@@ -634,4 +636,3 @@ init python:
         return False
 
     renpy.arguments.register_command("android_build", android_build_command)
-

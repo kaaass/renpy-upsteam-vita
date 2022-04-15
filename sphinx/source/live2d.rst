@@ -185,6 +185,14 @@ Live2D animations are defined using the Live2D displayable and the image stateme
         `weight`
             Float from 0.0 to 1.0, the weight by which the new value will change the current value.
 
+There is a config variable that can help in debugging what motions and
+expressions were loaded from .model3.json files:
+
+.. var:: config.log_live2d_loading = False
+
+    If True, loaded path and used motions and expressions will be written to
+    log.txt on start.
+
 Live2D displayables should be assigned to an image statement::
 
     image hiyori = Live2D("Resources/Hiyori", base=.6)
@@ -194,6 +202,21 @@ defining different zooms and scaling factors. ::
 
     image hiyori close = Live2D("Resources/Hiyori", base=.6)
     image hiyori far = Live2D("Resources/Hiyori", base=.9)
+
+Keep in mind that the user's hardware may be unable to init Live2D, and in that
+case a single call to Live2D() will keep the entire project from loading. The same
+happens in the case of a game distributed in a web version. If your game should be able
+to work even without Live2D, you could use a wrapper or workaround, for example::
+
+    init python:
+        def MyLive2D(*args, fallback=Placeholder(text="no live2d"), **kwargs):
+            if renpy.has_live2d():
+                 return Live2D(*args, **kwargs)
+            else:
+                 return fallback
+
+    image kobayashi = MyLive2D(...)
+    image eileen moving = MyLive2D(..., fallback="eileen happy")
 
 Using Animations
 ----------------

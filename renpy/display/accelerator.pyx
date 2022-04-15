@@ -1,5 +1,5 @@
 #cython: profile=False
-# Copyright 2004-2021 Tom Rothamel <pytom@bishoujo.us>
+# Copyright 2004-2022 Tom Rothamel <pytom@bishoujo.us>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation files
@@ -279,7 +279,12 @@ def transform_render(self, widtho, heighto, st, at):
 
     if crop is not None:
 
-        if state.crop_relative:
+        crop_relative = state.crop_relative
+
+        if crop_relative is None:
+            crop_relative = renpy.config.crop_relative_default
+
+        if crop_relative:
             x, y, w, h = crop
 
             def relative(n, base, limit):
@@ -288,10 +293,15 @@ def transform_render(self, widtho, heighto, st, at):
                 else:
                     return min(int(n * base), limit)
 
-            x = relative(x, width, width)
-            y = relative(y, height, height)
-            w = relative(w, width, width - x)
-            h = relative(h, height, height - y)
+            if crop_relative == "area":
+                crop_xroom, crop_yroom = widtho, heighto
+            else:
+                crop_xroom, crop_yroom = width, height
+
+            x = relative(x, crop_xroom, crop_xroom)
+            y = relative(y, crop_yroom, crop_yroom)
+            w = relative(w, crop_xroom, crop_xroom - x)
+            h = relative(h, crop_yroom, crop_yroom - y)
 
             crop = (x, y, w, h)
 
@@ -532,6 +542,13 @@ def transform_render(self, widtho, heighto, st, at):
     else:
         self.forward = IDENTITY
 
+    pos = (xo, yo)
+
+    if state.subpixel:
+        rv.subpixel_blit(cr, pos)
+    else:
+        rv.blit(cr, pos)
+
     if mesh and perspective:
         mr = rv = make_mesh(rv)
 
@@ -587,13 +604,6 @@ def transform_render(self, widtho, heighto, st, at):
     # Clipping.
     rv.xclipping = clipping
     rv.yclipping = clipping
-
-    pos = (xo, yo)
-
-    if state.subpixel:
-        rv.subpixel_blit(cr, pos)
-    else:
-        rv.blit(cr, pos)
 
     self.offsets = [ pos ]
     self.render_size = (width, height)
