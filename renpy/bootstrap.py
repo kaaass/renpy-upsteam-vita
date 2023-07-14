@@ -358,7 +358,11 @@ You may be using a system install of python. Please run {0}.sh,
                 renpy.error.report_exception(e)
                 pass
 
-        sys.exit(exit_status)
+        if renpy.vita:
+            import renpy.renpyvita as renpyvita
+            renpyvita.exit_process(exit_status)
+        else:
+            sys.exit(exit_status)
 
     finally:
 

@@ -173,6 +173,12 @@ cython(
     libs=sdl + sound,
     define_macros=macros)
 
+cython(
+    "renpy.renpyvita",
+    [ "renpy_vita.c", ],
+    libs=sdl,
+    define_macros=macros)
+
 # renpy
 cython("renpy.parsersupport")
 cython("renpy.pydict")
