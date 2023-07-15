@@ -20,7 +20,7 @@ int RPVITA_exit_process(int res) {
 
 /* Video Player */
 
-static void convert_nv12_to_rgb24(uint8_t *, uint8_t *, int, int);
+static void convert_nv12_to_rgba(uint8_t *, uint8_t *, int, int);
 static void *mem_alloc(void *p, uint32_t alignment, uint32_t size);
 static void mem_free(void *p, void* pMemory);
 static void *gpu_alloc(void* p, uint32_t alignment, uint32_t size);
@@ -51,14 +51,14 @@ PyObject *RPVITA_video_read_video() {
             if (sceAvPlayerGetVideoData(movie_player, &frame)) {
                 int width = frame.details.video.width;
                 int height = frame.details.video.height;
-                uint8_t *rgb24_data = SDL_malloc(width * height * 3);
+                uint8_t *rgba_data = SDL_malloc(width * height * 4);
 
                 // Convert pixel format
-                convert_nv12_to_rgb24(frame.pData, rgb24_data, width, height);
+                convert_nv12_to_rgba(frame.pData, rgba_data, width, height);
 
                 // Create SDL surface
-                surf = SDL_CreateRGBSurfaceFrom(rgb24_data, width, height, 24, width * 3,
-                        0x0000FF, 0x00FF00, 0xFF0000, 0);
+                surf = SDL_CreateRGBSurfaceFrom(rgba_data, width, height, 32, width * 4,
+                        0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
                 // Force SDL to take over management of pixels.
                 surf->flags &= ~SDL_PREALLOC;
@@ -117,9 +117,9 @@ int RPVITA_video_get_playing() {
 
 /* Utils function */
 
-static void convert_nv12_to_rgb24(uint8_t *nv12_data, uint8_t *rgb24_data, int width, int height) {
+static void convert_nv12_to_rgba(uint8_t *nv12_data, uint8_t *rgba_data, int width, int height) {
     struct SwsContext *sws_ctx = sws_getContext(width, height, AV_PIX_FMT_NV12,
-                                                 width, height, AV_PIX_FMT_RGB24,
+                                                 width, height, AV_PIX_FMT_RGBA,
                                                  SWS_BILINEAR, NULL, NULL, NULL);
     if (!sws_ctx) {
         // TODO error handling
@@ -130,8 +130,8 @@ static void convert_nv12_to_rgb24(uint8_t *nv12_data, uint8_t *rgb24_data, int w
                                nv12_data + width * height };
     int src_strides[3] = { width, width };
 
-    uint8_t *dst_slices[1] = { rgb24_data };
-    int dst_strides[1] = { width * 3 };
+    uint8_t *dst_slices[1] = { rgba_data };
+    int dst_strides[1] = { width * 4 };
 
     sws_scale(sws_ctx, src_slices, src_strides, 0, height, dst_slices, dst_strides);
 
