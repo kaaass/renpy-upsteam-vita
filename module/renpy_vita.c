@@ -53,8 +53,8 @@ static uint8_t _video_buffer[MAX_WIDTH * MAX_HEIGHT * 4 + NEON_ALIGN];
 #define video_buffer ((uint8_t *) ALIGN((uintptr_t) _video_buffer, NEON_ALIGN))
 static SceAvPlayerFrameInfo video_frame_info;
 static int received_frames = 0;
-static uint8_t _nv12_video_buffer[MAX_WIDTH * MAX_HEIGHT * 3 / 2 + NEON_ALIGN];
-#define nv12_video_buffer ((uint8_t *) ALIGN((uintptr_t) _nv12_video_buffer, NEON_ALIGN))
+static uint64_t lastFrameTs = 0;
+static uint8_t frame_buffer[MAX_WIDTH * MAX_HEIGHT * 4];
 
 void RPVITA_periodic() {
 }
@@ -63,16 +63,26 @@ void fetch_frame_thread() {
     // Fetch video frame
     while (player_state == PLAYER_ACTIVE) {
         if (sceAvPlayerIsActive(movie_player)) {
-            SDL_LockMutex(frame_mutex);
             if (sceAvPlayerGetVideoData(movie_player, &video_frame_info)) {
-                memcpy(nv12_video_buffer, video_frame_info.pData,
-                        video_frame_info.details.video.width * video_frame_info.details.video.height * 3 / 2);
-                received_frames += 1;
+                int width = video_frame_info.details.video.width;
+                int height = video_frame_info.details.video.height;
+
+                if (lastFrameTs == 0 || video_frame_info.timeStamp != lastFrameTs) {
+                    // Receive new frame
+
+                    // Convert pixel format
+                    convert_nv12_to_rgba(video_frame_info.pData, video_buffer, width, height);
+
+                    SDL_LockMutex(frame_mutex);
+                    memcpy(frame_buffer, video_buffer, width * height * 4);
+                    received_frames += 1;
+                    SDL_UnlockMutex(frame_mutex);
+                }
             }
-            SDL_UnlockMutex(frame_mutex);
         } else {
             player_state = PLAYER_STOP;
         }
+        SDL_Delay(10);
     }
 
     // If video stop, close av player
@@ -97,11 +107,8 @@ PyObject *RPVITA_video_read_video() {
         int width = video_frame_info.details.video.width;
         int height = video_frame_info.details.video.height;
 
-        // Convert pixel format
-        convert_nv12_to_rgba(nv12_video_buffer, video_buffer, width, height);
-
         // Create SDL surface
-        surf = SDL_CreateRGBSurfaceFrom(video_buffer, width, height, 32, width * 4,
+        surf = SDL_CreateRGBSurfaceFrom(frame_buffer, width, height, 32, width * 4,
                 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
         received_frames = 0;
