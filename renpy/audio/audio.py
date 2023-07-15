@@ -42,6 +42,7 @@ import io
 # Import the appropriate modules, or set them to None if we cannot.
 
 import renpy.audio.renpysound as renpysound
+import renpy.renpyvita as renpyvita
 
 # This is True if we were able to sucessfully enable the pcm audio.
 pcm_ok = None
@@ -950,6 +951,9 @@ def init():
                 pcm_ok = True
             except:
                 pcm_ok = False
+
+    if renpy.vita:
+        renpyvita.video_init()
 
     # Find all of the mixers in the game.
     mixers = [ ]

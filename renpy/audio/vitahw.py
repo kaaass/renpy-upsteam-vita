@@ -46,9 +46,6 @@ class VitaVideoChannel(object):
             self.default_loop = default_loop
             self.default_loop_set = True
 
-        # Init
-        renpyvita.video_init()
-
     def get_context(self):
         """
         Returns the MusicContext corresponding to this channel, taken from

@@ -37,10 +37,13 @@ enum {
 
 SceAvPlayerHandle movie_player;
 int player_state = PLAYER_INACTIVE;
+static SDL_mutex *frame_mutex;
 
 void RPVITA_video_init() {
     import_pygame_sdl2();
     sceSysmoduleLoadModule(SCE_SYSMODULE_AVPLAYER);
+    // hold it until game end
+    frame_mutex = SDL_CreateMutex();
 }
 
 #define MAX_WIDTH 960
@@ -50,14 +53,23 @@ static uint8_t _video_buffer[MAX_WIDTH * MAX_HEIGHT * 4 + NEON_ALIGN];
 #define video_buffer ((uint8_t *) ALIGN((uintptr_t) _video_buffer, NEON_ALIGN))
 static SceAvPlayerFrameInfo video_frame_info;
 static int received_frames = 0;
+static uint8_t _nv12_video_buffer[MAX_WIDTH * MAX_HEIGHT * 3 / 2 + NEON_ALIGN];
+#define nv12_video_buffer ((uint8_t *) ALIGN((uintptr_t) _nv12_video_buffer, NEON_ALIGN))
 
 void RPVITA_periodic() {
-    // Process video frame
-    if (player_state == PLAYER_ACTIVE) {
+}
+
+void fetch_frame_thread() {
+    // Fetch video frame
+    while (player_state == PLAYER_ACTIVE) {
         if (sceAvPlayerIsActive(movie_player)) {
+            SDL_LockMutex(frame_mutex);
             if (sceAvPlayerGetVideoData(movie_player, &video_frame_info)) {
+                memcpy(nv12_video_buffer, video_frame_info.pData,
+                        video_frame_info.details.video.width * video_frame_info.details.video.height * 3 / 2);
                 received_frames += 1;
             }
+            SDL_UnlockMutex(frame_mutex);
         } else {
             player_state = PLAYER_STOP;
         }
@@ -67,14 +79,16 @@ void RPVITA_periodic() {
     if (player_state == PLAYER_STOP) {
         sceAvPlayerStop(movie_player);
         sceAvPlayerClose(movie_player);
-        // TODO stop audio
         player_state = PLAYER_INACTIVE;
+        received_frames = 0;
     }
+    printf("Video thread exit\n");
 }
 
 PyObject *RPVITA_video_read_video() {
     SDL_Surface *surf = NULL;
 
+    SDL_LockMutex(frame_mutex);
     if (received_frames > 0) {
         if (received_frames > 1) {
             printf("WARN: Dropped %d frames\n", received_frames - 1);
@@ -83,8 +97,8 @@ PyObject *RPVITA_video_read_video() {
         int width = video_frame_info.details.video.width;
         int height = video_frame_info.details.video.height;
 
-        // Convert pixel format. This is singled threaded, so should be safe to access
-        convert_nv12_to_rgba(video_frame_info.pData, video_buffer, width, height);
+        // Convert pixel format
+        convert_nv12_to_rgba(nv12_video_buffer, video_buffer, width, height);
 
         // Create SDL surface
         surf = SDL_CreateRGBSurfaceFrom(video_buffer, width, height, 32, width * 4,
@@ -92,6 +106,7 @@ PyObject *RPVITA_video_read_video() {
 
         received_frames = 0;
     }
+    SDL_UnlockMutex(frame_mutex);
 
     // Make return
     if (surf) {
@@ -161,6 +176,7 @@ static void event_callback(void *p, int32_t argEventId, int32_t argSourceId, voi
         printf("Video ts: %ld\n", sceAvPlayerCurrentTime(movie_player));
         printf("Start video\n");
         sceAvPlayerStart(movie_player);
+        SDL_CreateThread(fetch_frame_thread, "Video fetch frame", NULL);
     }
 }
 
