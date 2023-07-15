@@ -48,24 +48,15 @@ void RPVITA_video_init() {
 #define NEON_ALIGN 0x80
 static uint8_t _video_buffer[MAX_WIDTH * MAX_HEIGHT * 4 + NEON_ALIGN];
 #define video_buffer ((uint8_t *) ALIGN((uintptr_t) _video_buffer, NEON_ALIGN))
+static SceAvPlayerFrameInfo video_frame_info;
+static int received_frames = 0;
 
-PyObject *RPVITA_video_read_video() {
-    SDL_Surface *surf = NULL;
-
+void RPVITA_periodic() {
     // Process video frame
     if (player_state == PLAYER_ACTIVE) {
         if (sceAvPlayerIsActive(movie_player)) {
-            SceAvPlayerFrameInfo frame;
-            if (sceAvPlayerGetVideoData(movie_player, &frame)) {
-                int width = frame.details.video.width;
-                int height = frame.details.video.height;
-
-                // Convert pixel format
-                convert_nv12_to_rgba(frame.pData, video_buffer, width, height);
-
-                // Create SDL surface
-                surf = SDL_CreateRGBSurfaceFrom(video_buffer, width, height, 32, width * 4,
-                        0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+            if (sceAvPlayerGetVideoData(movie_player, &video_frame_info)) {
+                received_frames += 1;
             }
         } else {
             player_state = PLAYER_STOP;
@@ -78,6 +69,28 @@ PyObject *RPVITA_video_read_video() {
         sceAvPlayerClose(movie_player);
         // TODO stop audio
         player_state = PLAYER_INACTIVE;
+    }
+}
+
+PyObject *RPVITA_video_read_video() {
+    SDL_Surface *surf = NULL;
+
+    if (received_frames > 0) {
+        if (received_frames > 1) {
+            printf("WARN: Dropped %d frames\n", received_frames - 1);
+        }
+
+        int width = video_frame_info.details.video.width;
+        int height = video_frame_info.details.video.height;
+
+        // Convert pixel format. This is singled threaded, so should be safe to access
+        convert_nv12_to_rgba(video_frame_info.pData, video_buffer, width, height);
+
+        // Create SDL surface
+        surf = SDL_CreateRGBSurfaceFrom(video_buffer, width, height, 32, width * 4,
+                0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+
+        received_frames = 0;
     }
 
     // Make return

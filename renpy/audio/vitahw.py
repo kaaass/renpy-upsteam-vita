@@ -112,6 +112,8 @@ class VitaVideoChannel(object):
             self.stop()
             return
 
+        renpyvita.periodic()
+
         if self.get_playing():
             return
 

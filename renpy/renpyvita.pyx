@@ -5,6 +5,7 @@ cdef extern from "renpy_vita.h":
     void RPVITA_video_start(char *file)
     void RPVITA_video_stop()
     int RPVITA_video_get_playing()
+    void RPVITA_periodic()
 
 def exit_process(res):
     RPVITA_exit_process(res)
@@ -23,3 +24,6 @@ def video_stop():
 
 def video_get_playing():
     return RPVITA_video_get_playing()
+
+def periodic():
+    RPVITA_periodic()
