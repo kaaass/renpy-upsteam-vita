@@ -118,13 +118,32 @@ int RPVITA_video_get_playing() {
 
 /* Utils function */
 
+struct SwsCache {
+    struct SwsContext *sws_ctx;
+    int width;
+    int height;
+} sws_cache = { NULL, 0, 0 };
+
 static void convert_nv12_to_rgba(uint8_t *nv12_data, uint8_t *rgba_data, int width, int height) {
-    struct SwsContext *sws_ctx = sws_getContext(width, height, AV_PIX_FMT_NV12,
-                                                 width, height, AV_PIX_FMT_RGBA,
-                                                 SWS_BILINEAR, NULL, NULL, NULL);
-    if (!sws_ctx) {
-        // TODO error handling
-        return;
+    struct SwsContext *sws_ctx = NULL;
+
+    // Get sws context from cache
+    if (sws_cache.sws_ctx && sws_cache.width == width && sws_cache.height == height) {
+        sws_ctx = sws_cache.sws_ctx;
+    } else {
+        // Create new sws context and cache it
+        if (sws_cache.sws_ctx) {
+            sws_freeContext(sws_cache.sws_ctx);
+        }
+        sws_ctx = sws_getContext(width, height, AV_PIX_FMT_NV12, width, height, AV_PIX_FMT_RGBA,
+                SWS_BILINEAR, NULL, NULL, NULL);
+        if (!sws_ctx) {
+            // TODO error handling
+            return;
+        }
+        sws_cache.sws_ctx = sws_ctx;
+        sws_cache.width = width;
+        sws_cache.height = height;
     }
 
     uint8_t *src_slices[3] = { nv12_data,
@@ -135,8 +154,6 @@ static void convert_nv12_to_rgba(uint8_t *nv12_data, uint8_t *rgba_data, int wid
     int dst_strides[1] = { width * 4 };
 
     sws_scale(sws_ctx, src_slices, src_strides, 0, height, dst_slices, dst_strides);
-
-    sws_freeContext(sws_ctx);
 }
 
 static void *mem_alloc(void *p, uint32_t alignment, uint32_t size) {
