@@ -14,6 +14,8 @@
 #define ALIGN(x, a) (((x) + ((a)-1)) & ~((a)-1))
 #endif
 
+#define SCE_AVPLAYER_STATE_READY 2
+
 int RPVITA_exit_process(int res) {
     sceKernelExitProcess(res);
 }
@@ -25,6 +27,7 @@ static void *mem_alloc(void *p, uint32_t alignment, uint32_t size);
 static void mem_free(void *p, void* pMemory);
 static void *gpu_alloc(void* p, uint32_t alignment, uint32_t size);
 static void gpu_free(void* p, void* pMemory);
+static void event_callback(void *p, int32_t argEventId, int32_t argSourceId, void *argEventData);
 
 enum {
   PLAYER_INACTIVE,
@@ -94,10 +97,11 @@ void RPVITA_video_start(const char *file) {
     playerInit.memoryReplacement.deallocate = mem_free;
     playerInit.memoryReplacement.allocateTexture = gpu_alloc;
     playerInit.memoryReplacement.deallocateTexture = gpu_free;
+    playerInit.eventReplacement.eventCallback = event_callback;
 
     playerInit.basePriority = 0xA0;
     playerInit.numOutputVideoFrameBuffers = 2;
-    playerInit.autoStart = 1;
+    playerInit.autoStart = 0;
 
     movie_player = sceAvPlayerInit(&playerInit);
 
@@ -112,6 +116,39 @@ void RPVITA_video_stop() {
 
 int RPVITA_video_get_playing() {
     return player_state == PLAYER_ACTIVE && sceAvPlayerIsActive(movie_player);
+}
+
+static void event_callback(void *p, int32_t argEventId, int32_t argSourceId, void *argEventData) {
+    printf("Player Event: %d\n", argEventId);
+
+    if (argEventId == SCE_AVPLAYER_STATE_READY) {
+        SceAvPlayerStreamInfo info;
+        memset(&info, 0, sizeof(SceAvPlayerStreamInfo));
+
+        int n = sceAvPlayerStreamCount(movie_player);
+        printf("Stream count: %d\n", n);
+
+        for (int i = 0; i < n; i++) {
+            sceAvPlayerGetStreamInfo(movie_player, i, &info);
+
+            if (info.type == SCE_AVPLAYER_AUDIO) {
+                printf("Video audio stream: freq=%d, channels=%d\n",
+                        info.details.audio.sampleRate, info.details.audio.channelCount);
+
+                // Enable
+                printf("Enable audio stream\n");
+                sceAvPlayerEnableStream(movie_player, i);
+            } else if (info.type == SCE_AVPLAYER_VIDEO) {
+                // Enable
+                printf("Enable video stream\n");
+                sceAvPlayerEnableStream(movie_player, i);
+            }
+        }
+
+        printf("Video ts: %ld\n", sceAvPlayerCurrentTime(movie_player));
+        printf("Start video\n");
+        sceAvPlayerStart(movie_player);
+    }
 }
 
 void vita_audio_callback(void *p, Uint8 *stream, int length) {
