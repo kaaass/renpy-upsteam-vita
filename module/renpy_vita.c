@@ -42,7 +42,9 @@ void RPVITA_video_init() {
 
 #define MAX_WIDTH 960
 #define MAX_HEIGHT 544
-static uint8_t video_buffer[MAX_WIDTH * MAX_HEIGHT * 4];
+#define NEON_ALIGN 0x80
+static uint8_t _video_buffer[MAX_WIDTH * MAX_HEIGHT * 4 + NEON_ALIGN];
+#define video_buffer ((uint8_t *) ALIGN((uintptr_t) _video_buffer, NEON_ALIGN))
 
 PyObject *RPVITA_video_read_video() {
     SDL_Surface *surf = NULL;
