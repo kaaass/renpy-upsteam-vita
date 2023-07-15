@@ -40,6 +40,9 @@ void RPVITA_video_init() {
     sceSysmoduleLoadModule(SCE_SYSMODULE_AVPLAYER);
 }
 
+#define MAX_WIDTH 960
+#define MAX_HEIGHT 544
+static uint8_t video_buffer[MAX_WIDTH * MAX_HEIGHT * 4];
 
 PyObject *RPVITA_video_read_video() {
     SDL_Surface *surf = NULL;
@@ -51,17 +54,13 @@ PyObject *RPVITA_video_read_video() {
             if (sceAvPlayerGetVideoData(movie_player, &frame)) {
                 int width = frame.details.video.width;
                 int height = frame.details.video.height;
-                uint8_t *rgba_data = SDL_malloc(width * height * 4);
 
                 // Convert pixel format
-                convert_nv12_to_rgba(frame.pData, rgba_data, width, height);
+                convert_nv12_to_rgba(frame.pData, video_buffer, width, height);
 
                 // Create SDL surface
-                surf = SDL_CreateRGBSurfaceFrom(rgba_data, width, height, 32, width * 4,
+                surf = SDL_CreateRGBSurfaceFrom(video_buffer, width, height, 32, width * 4,
                         0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-
-                // Force SDL to take over management of pixels.
-                surf->flags &= ~SDL_PREALLOC;
             }
         } else {
             player_state = PLAYER_STOP;
