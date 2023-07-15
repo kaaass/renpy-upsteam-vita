@@ -765,6 +765,11 @@ try:
 except:
     pass
 
+try:
+    from renpy.audio.vitahw import VitaVideoChannel
+except:
+    pass
+
 # A list of channels we know about.
 all_channels = [ ]
 
@@ -828,6 +833,8 @@ def register_channel(name, mixer=None, loop=None, stop_on_mute=True, tight=False
         c = AndroidVideoChannel(name, default_loop=loop, file_prefix=file_prefix, file_suffix=file_suffix)
     elif renpy.ios and renpy.config.hw_video and name == "movie":
         c = IOSVideoChannel(name, default_loop=loop, file_prefix=file_prefix, file_suffix=file_suffix)
+    elif renpy.vita and name == "movie":
+        c = VitaVideoChannel(name, default_loop=loop, file_prefix=file_prefix, file_suffix=file_suffix)
     else:
         c = Channel(name, loop, stop_on_mute, tight, file_prefix, file_suffix, buffer_queue, movie=movie, framedrop=framedrop)
 
