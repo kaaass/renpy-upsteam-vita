@@ -103,8 +103,6 @@ void RPVITA_video_start(const char *file) {
 
     sceAvPlayerAddSource(movie_player, file);
 
-    // TODO audio
-
     player_state = PLAYER_ACTIVE;
 }
 
@@ -114,6 +112,21 @@ void RPVITA_video_stop() {
 
 int RPVITA_video_get_playing() {
     return player_state == PLAYER_ACTIVE && sceAvPlayerIsActive(movie_player);
+}
+
+void vita_audio_callback(void *p, Uint8 *stream, int length) {
+    SceAvPlayerFrameInfo frame;
+    memset(&frame, 0, sizeof(SceAvPlayerFrameInfo));
+
+    memset(stream, 0, length);
+
+    if (player_state != PLAYER_ACTIVE || !sceAvPlayerIsActive(movie_player)) {
+        return;
+    }
+
+    if (sceAvPlayerGetAudioData(movie_player, &frame)) {
+        memcpy(stream, frame.pData, frame.details.audio.size);
+    }
 }
 
 /* Utils function */

@@ -22,6 +22,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #include "renpysound_core.h"
+#include "renpy_vita.h"
 #include <Python.h>
 #include <SDL.h>
 #include <SDL_thread.h>
@@ -423,6 +424,9 @@ static void callback(void *userdata, Uint8 *stream, int length) {
     int channel = 0;
 
     memset(stream, 0, length);
+
+    // Hook of vita video audio
+    vita_audio_callback(userdata, stream, length);
 
     for (channel = 0; channel < num_channels; channel++) {
 
