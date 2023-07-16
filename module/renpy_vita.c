@@ -67,7 +67,7 @@ static uint8_t _video_buffer[MAX_WIDTH * MAX_HEIGHT * 4 + NEON_ALIGN];
 static SceAvPlayerFrameInfo video_frame_info;
 static int received_frames = 0;
 static uint64_t lastFrameTs = 0;
-static uint8_t frame_buffer[MAX_WIDTH * MAX_HEIGHT * 4];
+static uint8_t frame_buffer[2][MAX_WIDTH * MAX_HEIGHT * 4];
 
 void RPVITA_periodic() {
 }
@@ -87,7 +87,7 @@ int fetch_frame_thread() {
                     convert_nv12_to_rgba(video_frame_info.pData, video_buffer, width, height);
 
                     SDL_LockMutex(frame_mutex);
-                    memcpy(frame_buffer, video_buffer, width * height * 4);
+                    memcpy(frame_buffer[0], video_buffer, width * height * 4);
                     received_frames += 1;
                     SDL_UnlockMutex(frame_mutex);
                 }
@@ -120,8 +120,10 @@ PyObject *RPVITA_video_read_video() {
         int width = video_frame_info.details.video.width;
         int height = video_frame_info.details.video.height;
 
+        memcpy(frame_buffer[1], frame_buffer[0], width * height * 4);
+
         // Create SDL surface
-        surf = SDL_CreateRGBSurfaceFrom(frame_buffer, width, height, 32, width * 4,
+        surf = SDL_CreateRGBSurfaceFrom(frame_buffer[1], width, height, 32, width * 4,
                 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
         received_frames = 0;
