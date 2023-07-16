@@ -82,7 +82,6 @@ void fetch_frame_thread() {
         } else {
             player_state = PLAYER_STOP;
         }
-        SDL_Delay(10);
     }
 
     // If video stop, close av player
@@ -167,13 +166,16 @@ static void event_callback(void *p, int32_t argEventId, int32_t argSourceId, voi
             sceAvPlayerGetStreamInfo(movie_player, i, &info);
 
             if (info.type == SCE_AVPLAYER_AUDIO) {
-                printf("Video audio stream: freq=%d, channels=%d\n",
+                printf("Video: audio stream: freq=%d, channels=%d\n",
                         info.details.audio.sampleRate, info.details.audio.channelCount);
 
                 // Enable
                 printf("Enable audio stream\n");
                 sceAvPlayerEnableStream(movie_player, i);
             } else if (info.type == SCE_AVPLAYER_VIDEO) {
+                printf("Video: video stream: width=%d, height=%d, lang=%d\n",
+                        info.details.video.width, info.details.video.height, info.details.video.languageCode);
+
                 // Enable
                 printf("Enable video stream\n");
                 sceAvPlayerEnableStream(movie_player, i);
@@ -188,18 +190,19 @@ static void event_callback(void *p, int32_t argEventId, int32_t argSourceId, voi
 }
 
 void vita_audio_callback(void *p, Uint8 *stream, int length) {
-    SceAvPlayerFrameInfo frame;
-    memset(&frame, 0, sizeof(SceAvPlayerFrameInfo));
-
-    memset(stream, 0, length);
-
-    if (player_state != PLAYER_ACTIVE || !sceAvPlayerIsActive(movie_player)) {
-        return;
-    }
-
-    if (sceAvPlayerGetAudioData(movie_player, &frame)) {
-        memcpy(stream, frame.pData, frame.details.audio.size);
-    }
+    // TODO: fix audio
+//    SceAvPlayerFrameInfo frame;
+//    memset(&frame, 0, sizeof(SceAvPlayerFrameInfo));
+//
+//    memset(stream, 0, length);
+//
+//    if (player_state != PLAYER_ACTIVE || !sceAvPlayerIsActive(movie_player)) {
+//        return;
+//    }
+//
+//    if (sceAvPlayerGetAudioData(movie_player, &frame)) {
+//        memcpy(stream, frame.pData, frame.details.audio.size);
+//    }
 }
 
 /* Utils function */
