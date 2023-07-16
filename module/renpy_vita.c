@@ -5,6 +5,7 @@
 #include "psp2/avplayer.h"
 #include "psp2/kernel/sysmem.h"
 #include "psp2/gxm.h"
+#include "psp2/audioout.h"
 #include <pygame_sdl2/pygame_sdl2.h>
 #include <libswscale/swscale.h>
 
@@ -38,12 +39,24 @@ enum {
 SceAvPlayerHandle movie_player;
 int player_state = PLAYER_INACTIVE;
 static SDL_mutex *frame_mutex;
+static int audio_port = -1;
+
+void movie_audio_init() {
+    audio_port = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, 1024, 48000, SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO);
+    if (audio_port < 0) {
+        printf("Error opening audio port: %d\n", audio_port);
+        // TODO: error handling
+        return;
+    }
+    // TODO: close
+}
 
 void RPVITA_video_init() {
     import_pygame_sdl2();
     sceSysmoduleLoadModule(SCE_SYSMODULE_AVPLAYER);
     // hold it until game end
     frame_mutex = SDL_CreateMutex();
+    movie_audio_init();
 }
 
 #define MAX_WIDTH 960
@@ -59,7 +72,7 @@ static uint8_t frame_buffer[MAX_WIDTH * MAX_HEIGHT * 4];
 void RPVITA_periodic() {
 }
 
-void fetch_frame_thread() {
+int fetch_frame_thread() {
     // Fetch video frame
     while (player_state == PLAYER_ACTIVE) {
         if (sceAvPlayerIsActive(movie_player)) {
@@ -92,6 +105,7 @@ void fetch_frame_thread() {
         received_frames = 0;
     }
     printf("Video thread exit\n");
+    return 0;
 }
 
 PyObject *RPVITA_video_read_video() {
@@ -121,6 +135,28 @@ PyObject *RPVITA_video_read_video() {
         Py_INCREF(Py_None);
         return Py_None;
     }
+}
+
+
+int movie_audio_thread() {
+    SceAvPlayerFrameInfo frame;
+    memset(&frame, 0, sizeof(SceAvPlayerFrameInfo));
+
+    uint8_t *noSound = (uint8_t *) memalign(0x20, 4096 * 4);
+    memset(noSound, 0, 4096 * 4);
+
+    while (player_state == PLAYER_ACTIVE && sceAvPlayerIsActive(movie_player)) {
+        if (sceAvPlayerGetAudioData(movie_player, &frame)) {
+            sceAudioOutSetConfig(audio_port, 1024, frame.details.audio.sampleRate,
+                    frame.details.audio.channelCount == 1 ? SCE_AUDIO_OUT_MODE_MONO : SCE_AUDIO_OUT_MODE_STEREO);
+            sceAudioOutOutput(audio_port, frame.pData);
+        } else {
+            sceAudioOutOutput(audio_port, noSound);
+        }
+    }
+
+    printf("Audio thread exit\n");
+    return 0;
 }
 
 void RPVITA_video_start(const char *file) {
@@ -186,23 +222,8 @@ static void event_callback(void *p, int32_t argEventId, int32_t argSourceId, voi
         printf("Start video\n");
         sceAvPlayerStart(movie_player);
         SDL_CreateThread(fetch_frame_thread, "Video fetch frame", NULL);
+        SDL_CreateThread(movie_audio_thread, "Movie audio thread", NULL);
     }
-}
-
-void vita_audio_callback(void *p, Uint8 *stream, int length) {
-    // TODO: fix audio
-//    SceAvPlayerFrameInfo frame;
-//    memset(&frame, 0, sizeof(SceAvPlayerFrameInfo));
-//
-//    memset(stream, 0, length);
-//
-//    if (player_state != PLAYER_ACTIVE || !sceAvPlayerIsActive(movie_player)) {
-//        return;
-//    }
-//
-//    if (sceAvPlayerGetAudioData(movie_player, &frame)) {
-//        memcpy(stream, frame.pData, frame.details.audio.size);
-//    }
 }
 
 /* Utils function */
